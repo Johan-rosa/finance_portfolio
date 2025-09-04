@@ -1,4 +1,5 @@
 library(dplyr)
+library(tidyr)
 library(purrr)
 library(ggplot2)
 library(highcharter)
@@ -24,9 +25,28 @@ stock_series <- portfolio |>
 # in the portfolio up to the current date.
 
 stocks <- stock_series |>
-  filter(date >= "2025-01-01") |> 
+  #filter(date >= "2025-01-01") |> 
   left_join(select(portfolio, ticker, quantity), by = "ticker") |>
-  mutate(value = close * quantity) 
+  mutate(value = close * quantity)
+
+
+# Moving average
+symbol <- stocks$ticker |> sample(1)
+stock_series |>
+  mutate(
+    ma_100 = zoo::rollmean(adjusted, 60, align = "right", fill = NA),
+    ma_50 = zoo::rollmean(adjusted, 30, align = "right", fill = NA),
+    .by = ticker
+  ) |>
+  filter(ticker == symbol, date >= "2025-01-01") |> 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = adjusted, color = "Price")) +
+  geom_line(aes(y = ma_100, color = "MA 60")) +
+  geom_line(aes(y = ma_50, color = "MA 30")) +
+  labs(x = NULL, y = "USD", color = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = glue::glue("{symbol} stock"))
 
 # Stock value
 stocks |>
