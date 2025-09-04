@@ -10,6 +10,9 @@ get_stock_data <- function(symbol, src = "yahoo", ...) {
   quantmod::getSymbols(symbol, src=src, auto.assign = FALSE, ...) |>
     as.data.frame() |>
     tibble::rownames_to_column("date") |>
-    setNames(c("date", "open", "high", "low", "close", "volumen", "adjusted")) |>
-    tibble::as_tibble()
+    purrr::set_names(c("date", "open", "high", "low", "close", "volumen", "adjusted")) |>
+    tibble::as_tibble() |>
+    dplyr::mutate(
+      date = lubridate::ymd(date)
+    )
 }
