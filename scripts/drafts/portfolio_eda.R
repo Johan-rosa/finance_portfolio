@@ -1,5 +1,7 @@
 library(dplyr)
 library(purrr)
+library(ggplot2)
+library(highcharter)
 
 options(box.path = here::here())
 
@@ -21,6 +23,15 @@ stock_series <- portfolio |>
 # and later bought again. Consider the period from the first time the asset appeared 
 # in the portfolio up to the current date.
 
-portfolio
-  
+stocks <- stock_series |>
+  filter(date >= "2025-01-01") |> 
+  left_join(select(portfolio, ticker, quantity), by = "ticker") |>
+  mutate(value = close * quantity) 
 
+stocks |>
+  summarise(assets = sum(value), .by = date) |>
+  ggplot(aes(x = date, y = assets)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = NULL, y = "US$") +
+  scale_y_continuous(labels = scales::comma)
