@@ -28,6 +28,7 @@ stocks <- stock_series |>
   left_join(select(portfolio, ticker, quantity), by = "ticker") |>
   mutate(value = close * quantity) 
 
+# Stock value
 stocks |>
   summarise(assets = sum(value), .by = date) |>
   ggplot(aes(x = date, y = assets)) +
@@ -35,3 +36,12 @@ stocks |>
   theme_minimal() +
   labs(x = NULL, y = "US$") +
   scale_y_continuous(labels = scales::comma)
+
+#Stock volatility
+stocks |>
+  summarise(
+    assets = round(sum(value), 2),
+    .by = date
+  ) |>
+  mutate(daily_returns = (assets / lag(assets) - 1) * 100) |> 
+  hchart("line", hcaes(x = date, y = daily_returns), name = "Daily returns")
