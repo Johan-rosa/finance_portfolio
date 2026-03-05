@@ -56,7 +56,7 @@ set_proxy <- function() {
     )
   }
   
-  proxy_url <- sprintf("http://%s:%s@%s", user, pass, proxy)
+  proxy_url <- glue::glue("http://{user}:{pass}@{proxy}")
   
   Sys.setenv(
     http_proxy  = proxy_url,
