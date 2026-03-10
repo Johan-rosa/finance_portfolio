@@ -36,7 +36,9 @@ positions <- logs |>
 
 daily_positions <- positions |>
   group_by(symbol) |>
-  complete(date = seq(min(date), max(prices$date), by = "day")) |>
+  complete(
+    date = seq(min(date), Sys.Date(), by = "day")
+  ) |>
   arrange(symbol, date) |>
   fill(position, .direction = "down") |>
   replace_na(list(position = 0)) |>
