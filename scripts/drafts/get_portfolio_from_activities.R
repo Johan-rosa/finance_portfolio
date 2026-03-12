@@ -44,7 +44,6 @@ daily_positions <- positions |>
   replace_na(list(position = 0)) |>
   ungroup()
 
-
 portfolio_daily <- daily_positions |>
   inner_join(
     prices |> select(symbol, date, price = adjusted),
@@ -145,5 +144,3 @@ current_portfolio <- logs |>
     avg_price = invested / sum(if_else(type == "buy", quantity, 0)),
     .groups = "drop"
   )
-
-
