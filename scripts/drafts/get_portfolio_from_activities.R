@@ -143,4 +143,5 @@ current_portfolio <- logs |>
     invested = sum(if_else(type == "buy", amount, 0)),
     avg_price = invested / sum(if_else(type == "buy", quantity, 0)),
     .groups = "drop"
-  )
+  ) |>
+  filter(round(quantity) > 0)
