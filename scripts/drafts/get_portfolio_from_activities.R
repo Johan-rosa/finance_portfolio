@@ -80,6 +80,7 @@ portfolio_returns <- portfolio_evolution |>
 
 return_lags <- tibble::tribble(
   ~period, ~lag,
+  "ytd", 75,
   "5d", 5,
   "1m", 21,
   "6m", 126,
@@ -108,11 +109,13 @@ returns |>
       symbol = colDef(),  # leave symbol as text
       `5d`  = colDef(cell = \(x) scales::percent(x, accuracy = 0.01)),
       `1m`  = colDef(cell = \(x) scales::percent(x, accuracy = 0.01)),
+      `ytd`  = colDef(cell = \(x) scales::percent(x, accuracy = 0.01)),
       `6m`  = colDef(cell = \(x) scales::percent(x, accuracy = 0.01)),
       `1y`  = colDef(cell = \(x) scales::percent(x, accuracy = 0.01))
     ),
     sortable = TRUE,
-    defaultPageSize = 20
+    pagination = FALSE,
+    highlight = TRUE
   )
 
 
@@ -145,3 +148,4 @@ current_portfolio <- logs |>
     .groups = "drop"
   ) |>
   filter(round(quantity) > 0)
+
