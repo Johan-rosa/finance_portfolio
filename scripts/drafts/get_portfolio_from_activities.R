@@ -7,63 +7,89 @@ library(reactable)
 options(box.path = here::here())
 
 box::use(
-  scripts / get_stock_data[get_stock_data],
+  scripts / get_stock_data[
+    get_stock_data,
+    update_portafolio_series,
+    load_portfolio_series,
+    read_portfolio_activity
+  ],
 )
 
+logs <- read_portfolio_activity() |>
+  filter_out(symbol == "AIRE")
 
-logs <- read_excel("data/portfolio_activity.xlsx") |>
-  mutate(date = as.Date(date)) |>
-  filter_out(symbol == "SOLUSD")
+# To update series, use this one instead
+# prices <- update_portafolio_series()
+
+prices <- load_portfolio_series()
 
 
-tickers <- unique(logs$symbol)
-start_date <- min(logs$date)
+positions_evolution <- function(portfolio_activity) {
+  portfolio_activity |>
+    dplyr::mutate(
+      qty_signed = if_else(type == "buy", quantity, -quantity) |>
+        round(4)
+    ) |>
+    dplyr::select(date, symbol, qty_signed) |>
+    dplyr::arrange(symbol, date) |>
+    dplyr::mutate(
+      position = pmax(cumsum(qty_signed), 0),
+      .by = symbol
+    ) |>
+    dplyr::select(-qty_signed)
+}
 
-prices <- tickers |>
-  set_names() |> 
-  map(get_stock_data, .progress = TRUE) |>
-  list_rbind(names_to = "symbol")
+expanded_positions_evolution <- function(portfolio_activity) {
+  portfolio_activity |>
+    positions_evolution() |>
+    dplyr::group_by(symbol) |>
+    tidyr::complete(
+      date = seq(min(date), Sys.Date(), by = "day")
+    ) |>
+    dplyr::arrange(symbol, date) |>
+    tidyr::fill(position, .direction = "down") |>
+    tidyr::replace_na(list(position = 0)) |>
+    dplyr::ungroup()
+}
+
+current_positions <- function(portfolio_activity) {
+  portfolio_activity |>
+    dplyr::mutate(
+      signed_qty = dplyr::if_else(type == "buy", quantity, -quantity)
+    ) |>
+    dplyr::group_by(symbol) |>
+    dplyr::summarise(
+      quantity = sum(signed_qty),
+      invested = sum(if_else(type == "buy", amount, 0)),
+      .groups = "drop"
+    ) |>
+    dplyr::filter(round(quantity) > 0) |>
+    dplyr::arrange(dplyr::desc(invested))
+}
+
 
 positions <- logs |> 
-  mutate(
-    qty_signed = if_else(type == "buy", quantity, -quantity)
-  ) |>
-  select(date, symbol, qty_signed) |>
-  arrange(symbol, date) |>
-  group_by(symbol) |>
-  mutate(position = cumsum(qty_signed)) |>
-  ungroup()
+  positions_evolution()
 
-daily_positions <- positions |>
-  group_by(symbol) |>
-  complete(
-    date = seq(min(date), Sys.Date(), by = "day")
-  ) |>
-  arrange(symbol, date) |>
-  fill(position, .direction = "down") |>
-  replace_na(list(position = 0)) |>
-  ungroup()
+daily_positions <- logs |>
+  expanded_positions_evolution()
 
 portfolio_daily <- daily_positions |>
   inner_join(
     prices |> select(symbol, date, price = adjusted),
     by = c("symbol", "date")
   ) |>
-  mutate(value = position * price)
+  mutate(value = position * price) |>
+  filter(value > 0)
 
 portfolio_evolution <- portfolio_daily |>
-  group_by(date) |>
-  summarise(
-    portfolio_value = sum(value),
-    .groups = "drop"
-  )
+  summarise(portfolio_value = sum(value), .by = date)
 
 cash_flows <- logs |>
   mutate(
     cash_flow = if_else(type == "buy", amount, -amount)
   ) |>
   summarise(net_flow = sum(cash_flow), .by = date)
-  
 
 portfolio_returns <- portfolio_evolution |>
   left_join(cash_flows, by = "date") |>
@@ -80,7 +106,7 @@ portfolio_returns <- portfolio_evolution |>
 
 return_lags <- tibble::tribble(
   ~period, ~lag,
-  "ytd", 75,
+  "ytd", 84,
   "5d", 5,
   "1m", 21,
   "6m", 126,
@@ -147,5 +173,6 @@ current_portfolio <- logs |>
     avg_price = invested / sum(if_else(type == "buy", quantity, 0)),
     .groups = "drop"
   ) |>
-  filter(round(quantity) > 0)
+  filter(round(quantity) > 0) |>
+  arrange(desc(invested))
 

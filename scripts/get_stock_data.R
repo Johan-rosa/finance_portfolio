@@ -16,3 +16,32 @@ get_stock_data <- function(symbol, src = "yahoo", ...) {
       date = lubridate::ymd(date)
     )
 }
+
+#' @export
+read_portfolio_activity <- function() {
+  readxl::read_excel("data/portfolio_activity.xlsx") |>
+    dplyr::mutate(date = as.Date(date)) |>
+    dplyr::filter_out(symbol == "SOLUSD")
+}
+
+#' @export
+update_portafolio_series <- function() {
+  logs <- read_portfolio_activity()
+ 
+  tickers <- unique(logs$symbol)
+  start_date <- min(logs$date)
+
+  prices <- tickers |>
+    purrr::set_names() |> 
+    purrr::map(get_stock_data, .progress = TRUE) |>
+    purrr::list_rbind(names_to = "symbol")
+
+  saveRDS(prices, "data/series.rds")
+  return(princes)
+}
+
+#' @export
+load_portfolio_series <- function() {
+  readRDS("data/series.rds")
+}
+
