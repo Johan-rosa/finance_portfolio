@@ -20,8 +20,8 @@ get_stock_data <- function(symbol, src = "yahoo", ...) {
 #' @export
 read_portfolio_activity <- function() {
   readxl::read_excel("data/portfolio_activity.xlsx") |>
-    dplyr::mutate(date = as.Date(date)) |>
-    dplyr::filter_out(symbol == "SOLUSD")
+    dplyr::mutate(date_time = as.Date(date_time)) |>
+    dplyr::rename(date = date_time)
 }
 
 #' @export

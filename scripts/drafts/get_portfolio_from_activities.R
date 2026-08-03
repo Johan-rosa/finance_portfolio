@@ -16,7 +16,8 @@ box::use(
 )
 
 logs <- read_portfolio_activity() |>
-  filter_out(symbol == "AIRE")
+  filter_out(ticker == "AIRE") |>
+  dplyr::rename(symbol = ticker)
 
 # To update series, use this one instead
 # prices <- update_portafolio_series()
