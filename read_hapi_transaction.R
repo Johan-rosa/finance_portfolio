@@ -38,3 +38,9 @@ read_buy <- function(as_json = FALSE) {
   if (as_json) return(jsonlite::toJSON(tidy_result))
   tidy_result
 }
+
+# (transactions <- read_buy())
+# 
+# (transactions <- dplyr::bind_rows(transactions, read_buy()))
+# 
+# clipr::write_clip(transactions)
