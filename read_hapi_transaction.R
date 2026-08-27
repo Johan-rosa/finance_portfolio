@@ -39,8 +39,8 @@ read_buy <- function(as_json = FALSE) {
   tidy_result
 }
 
-# (transactions <- read_buy())
-# 
-# (transactions <- dplyr::bind_rows(transactions, read_buy()))
-# 
-# clipr::write_clip(transactions)
+(transactions <- read_buy())
+
+(transactions <- dplyr::bind_rows(transactions, read_buy()))
+
+clipr::write_clip(transactions)
